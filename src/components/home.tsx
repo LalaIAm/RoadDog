@@ -1,66 +1,41 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import LocationInputs from "./TripPlanner/LocationInputs";
 import MapView from "./TripPlanner/MapView";
+import StopPlanner from "./TripPlanner/StopPlanner";
+import SavedStops from "./TripPlanner/SavedStops";
 import { useToast } from "@/components/ui/use-toast";
+import { useRoute } from "@/lib/contexts/RouteContext";
 
 function Home() {
-  const [startLocation, setStartLocation] = useState("New York, NY, USA");
-  const [endLocation, setEndLocation] = useState("Los Angeles, CA, USA");
-  const [startLocationError, setStartLocationError] = useState<string>();
-  const [endLocationError, setEndLocationError] = useState<string>();
-  const [mapError, setMapError] = useState<string>();
+  const { state, dispatch } = useRoute();
   const { toast } = useToast();
 
-  const validateLocation = (location: string): boolean => {
-    // Simple validation - ensure location is not empty and has at least 3 characters
-    return location.trim().length >= 3;
-  };
-
   const handleStartLocationChange = (value: string) => {
-    setStartLocationError(undefined);
-    setMapError(undefined);
-
-    if (!validateLocation(value)) {
-      setStartLocationError(
-        "Please enter a valid location (at least 3 characters)",
-      );
-      return;
-    }
-
-    setStartLocation(value);
+    dispatch({
+      type: "SET_LOCATIONS",
+      payload: { start: value, end: state.endLocation },
+    });
   };
 
   const handleEndLocationChange = (value: string) => {
-    setEndLocationError(undefined);
-    setMapError(undefined);
-
-    if (!validateLocation(value)) {
-      setEndLocationError(
-        "Please enter a valid location (at least 3 characters)",
-      );
-      return;
-    }
-
-    setEndLocation(value);
+    dispatch({
+      type: "SET_LOCATIONS",
+      payload: { start: state.startLocation, end: value },
+    });
   };
 
   const handleSwapLocations = () => {
     try {
-      const tempStart = startLocation;
-      setStartLocation(endLocation);
-      setEndLocation(tempStart);
-
-      // Clear any existing errors
-      setStartLocationError(undefined);
-      setEndLocationError(undefined);
-      setMapError(undefined);
+      dispatch({
+        type: "SET_LOCATIONS",
+        payload: { start: state.endLocation, end: state.startLocation },
+      });
 
       toast({
         title: "Locations swapped",
         description: "Start and end locations have been successfully swapped.",
       });
     } catch (error) {
-      setMapError("Failed to swap locations. Please try again.");
       toast({
         variant: "destructive",
         title: "Error",
@@ -69,26 +44,76 @@ function Home() {
     }
   };
 
+  const handleStopsFound = (stops: any[]) => {
+    dispatch({ type: "SET_AVAILABLE_STOPS", payload: stops });
+  };
+
+  const handleAddStop = (stop: any) => {
+    dispatch({ type: "ADD_STOP", payload: stop });
+  };
+
+  const handleRemoveStop = (stopId: string) => {
+    dispatch({ type: "REMOVE_STOP", payload: stopId });
+  };
+
+  const handleIntervalTypeChange = (type: "time" | "distance") => {
+    dispatch({
+      type: "SET_INTERVAL",
+      payload: { type, value: state.intervalValue },
+    });
+  };
+
+  const handleIntervalValueChange = (value: number) => {
+    dispatch({
+      type: "SET_INTERVAL",
+      payload: { type: state.intervalType, value },
+    });
+  };
+
+  const handleStopTypesChange = (types: any[]) => {
+    dispatch({ type: "SET_SELECTED_TYPES", payload: types });
+  };
+
   return (
     <div className="w-screen h-screen bg-gray-100 flex items-center justify-center relative">
       <div className="absolute inset-0">
         <MapView
-          startLocation={startLocation}
-          endLocation={endLocation}
-          error={mapError}
+          startLocation={state.startLocation}
+          endLocation={state.endLocation}
+          selectedTypes={state.selectedTypes}
+          interval={{ type: state.intervalType, value: state.intervalValue }}
+          onPlacesFound={handleStopsFound}
         />
       </div>
 
       <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10">
         <LocationInputs
-          startLocation={startLocation}
-          endLocation={endLocation}
+          startLocation={state.startLocation}
+          endLocation={state.endLocation}
           onStartLocationChange={handleStartLocationChange}
           onEndLocationChange={handleEndLocationChange}
           onSwapLocations={handleSwapLocations}
-          startLocationError={startLocationError}
-          endLocationError={endLocationError}
         />
+      </div>
+
+      <div className="absolute top-8 right-8 z-10">
+        <StopPlanner
+          intervalType={state.intervalType}
+          intervalValue={state.intervalValue}
+          route={{ start: state.startLocation, end: state.endLocation }}
+          onStopsFound={handleStopsFound}
+          stops={state.availableStops}
+          addedStops={state.selectedStops.map((stop) => stop.id)}
+          onIntervalTypeChange={handleIntervalTypeChange}
+          onIntervalValueChange={handleIntervalValueChange}
+          onStopTypesChange={handleStopTypesChange}
+          onAddStop={handleAddStop}
+          onRemoveStop={handleRemoveStop}
+        />
+      </div>
+
+      <div className="absolute top-8 right-[440px] z-10">
+        <SavedStops />
       </div>
     </div>
   );

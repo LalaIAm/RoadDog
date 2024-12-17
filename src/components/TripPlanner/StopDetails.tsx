@@ -13,6 +13,10 @@ interface StopDetailsProps {
   rating?: number;
   address?: string;
   distance?: string;
+  nextStopDistance?: string;
+  nextStopDuration?: string;
+  totalDistance?: string;
+  totalDuration?: string;
   duration?: string;
   phone?: string;
   website?: string;
@@ -30,6 +34,10 @@ const StopDetails = ({
   rating = 4.5,
   address = "123 Sample Street, City, State 12345",
   distance = "0.5 miles off route",
+  nextStopDistance = "50 miles",
+  nextStopDuration = "45 mins",
+  totalDistance = "150 miles",
+  totalDuration = "2h 15m",
   duration = "5 mins detour",
   phone = "+1 (555) 123-4567",
   website = "https://example.com",
@@ -116,11 +124,23 @@ const StopDetails = ({
               <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
               <div>
                 <p>{address}</p>
-                <div className="flex items-center gap-2 mt-1 text-muted-foreground">
-                  <Navigation className="h-3 w-3" />
-                  <span className="text-xs">{distance}</span>
-                  <Clock className="h-3 w-3 ml-2" />
-                  <span className="text-xs">{duration}</span>
+                <div className="mt-2 space-y-1 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Navigation className="h-3 w-3" />
+                    <span className="text-xs">{distance}</span>
+                    <Clock className="h-3 w-3 ml-2" />
+                    <span className="text-xs">{duration}</span>
+                  </div>
+                  <p className="text-xs">
+                    Next stop: {nextStopDistance}
+                    <span className="mx-1">•</span>
+                    {nextStopDuration}
+                  </p>
+                  <p className="text-xs">
+                    Total trip: {totalDistance}
+                    <span className="mx-1">•</span>
+                    {totalDuration}
+                  </p>
                 </div>
               </div>
             </div>

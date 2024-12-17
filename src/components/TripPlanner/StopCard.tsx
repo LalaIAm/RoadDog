@@ -10,6 +10,8 @@ interface StopCardProps {
   type?: StopType;
   rating?: number;
   distance?: string;
+  nextStopDistance?: string;
+  nextStopDuration?: string;
   duration?: string;
   isAdded?: boolean;
   onToggle?: () => void;
@@ -21,6 +23,8 @@ const StopCard = ({
   type = "food",
   rating = 4.5,
   distance = "0.5 miles off route",
+  nextStopDistance = "50 miles",
+  nextStopDuration = "45 mins",
   duration = "5 mins detour",
   isAdded = false,
   onToggle = () => {},
@@ -57,16 +61,22 @@ const StopCard = ({
             </Badge>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span>{rating.toFixed(1)}</span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span>{rating.toFixed(1)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                <span className="text-xs">{distance}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              <span className="text-xs">{distance}</span>
+            <div className="text-xs text-muted-foreground">
+              Next stop: {nextStopDistance}
+              <span className="mx-1">•</span>
+              {nextStopDuration}
             </div>
-            <span className="text-xs">{duration}</span>
           </div>
         </div>
 

@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import IntervalSelector from "./IntervalSelector";
 import StopTypeFilter from "./StopTypeFilter";
 import StopSuggestions from "./StopSuggestions";
-import { getStops } from "@/lib/stops";
+import MapView from "./MapView";
 import type { Stop } from "@/types/database";
 
 type StopType = "accommodations" | "food" | "gas" | "attractions";
@@ -11,7 +11,8 @@ type StopType = "accommodations" | "food" | "gas" | "attractions";
 interface StopPlannerProps {
   intervalType?: "time" | "distance";
   intervalValue?: number;
-  selectedTypes?: StopType[];
+  route?: { start: string; end: string };
+  onStopsFound?: (stops: Stop[]) => void;
   stops?: Stop[];
   addedStops?: string[];
   onIntervalTypeChange?: (type: "time" | "distance") => void;
@@ -24,7 +25,11 @@ interface StopPlannerProps {
 const StopPlanner = ({
   intervalType = "time",
   intervalValue = 2,
-  selectedTypes = ["food", "gas"],
+  route = {
+    start: "New York, NY, USA",
+    end: "Los Angeles, CA, USA",
+  },
+  onStopsFound = () => {},
   stops: initialStops = [],
   addedStops = [],
   onIntervalTypeChange = () => {},
@@ -35,22 +40,11 @@ const StopPlanner = ({
 }: StopPlannerProps) => {
   const [localIntervalType, setLocalIntervalType] = useState(intervalType);
   const [localIntervalValue, setLocalIntervalValue] = useState(intervalValue);
-  const [localSelectedTypes, setLocalSelectedTypes] =
-    useState<StopType[]>(selectedTypes);
+  const [localSelectedTypes, setLocalSelectedTypes] = useState<StopType[]>([
+    "food",
+    "gas",
+  ]);
   const [stops, setStops] = useState<Stop[]>(initialStops);
-
-  // Fetch stops from database
-  useEffect(() => {
-    const fetchStops = async () => {
-      try {
-        const dbStops = await getStops();
-        setStops(dbStops);
-      } catch (error) {
-        console.error("Error fetching stops:", error);
-      }
-    };
-    fetchStops();
-  }, []);
 
   const handleIntervalTypeChange = (type: "time" | "distance") => {
     setLocalIntervalType(type);
@@ -67,6 +61,16 @@ const StopPlanner = ({
     onStopTypesChange(types);
   };
 
+  const handlePlacesFound = (places: Stop[]) => {
+    setStops(places);
+    onStopsFound(places);
+  };
+
+  const interval = {
+    value: localIntervalValue,
+    type: localIntervalType,
+  };
+
   return (
     <Card className="w-[400px] h-[600px] bg-white p-4 space-y-4">
       <IntervalSelector
@@ -79,6 +83,14 @@ const StopPlanner = ({
       <StopTypeFilter
         selectedTypes={localSelectedTypes}
         onChange={handleStopTypesChange}
+      />
+
+      <MapView
+        startLocation={route.start}
+        endLocation={route.end}
+        selectedTypes={localSelectedTypes}
+        interval={interval}
+        onPlacesFound={handlePlacesFound}
       />
 
       <StopSuggestions
