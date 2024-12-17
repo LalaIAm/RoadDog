@@ -1,16 +1,22 @@
 import { useState } from "react";
 import LocationInput from "./LocationInput";
 import SwapButton from "./SwapButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface LocationInputsProps {
   startLocation?: string;
   endLocation?: string;
+  startLocationError?: string;
+  endLocationError?: string;
   onStartLocationChange?: (value: string) => void;
   onEndLocationChange?: (value: string) => void;
   onSwapLocations?: () => void;
 }
 
 const LocationInputs = ({
+  startLocationError,
+  endLocationError,
   startLocation = "",
   endLocation = "",
   onStartLocationChange = () => {},
@@ -44,6 +50,7 @@ const LocationInputs = ({
         label="Starting Point"
         placeholder="Enter starting location"
         value={localStartLocation}
+        error={startLocationError}
         onChange={handleStartLocationChange}
       />
       <div className="relative">
@@ -55,6 +62,7 @@ const LocationInputs = ({
         label="Destination"
         placeholder="Enter destination"
         value={localEndLocation}
+        error={endLocationError}
         onChange={handleEndLocationChange}
       />
     </div>

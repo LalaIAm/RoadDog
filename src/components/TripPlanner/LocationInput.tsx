@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,33 +13,73 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MapPin } from "lucide-react";
+import { AlertCircle, MapPin } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useJsApiLoader } from "@react-google-maps/api";
+import { loadScriptOptions } from "@/lib/google-maps";
 
 interface LocationInputProps {
   label?: string;
   placeholder?: string;
   value?: string;
+  error?: string;
   onChange?: (value: string) => void;
 }
 
 const LocationInput = ({
   label = "Location",
   placeholder = "Enter a location",
+  error,
   value = "",
   onChange = () => {},
 }: LocationInputProps) => {
+  const { isLoaded } = useJsApiLoader(loadScriptOptions);
   const [open, setOpen] = useState(false);
+  const [predictions, setPredictions] = useState<
+    google.maps.places.AutocompletePrediction[]
+  >([]);
 
-  // Mock suggestions for the autocomplete
-  const suggestions = [
-    "New York, NY, USA",
-    "Los Angeles, CA, USA",
-    "Chicago, IL, USA",
-    "San Francisco, CA, USA",
-  ];
+  useEffect(() => {
+    if (error) {
+      setOpen(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (!value.trim() || !isLoaded) {
+      setPredictions([]);
+      return;
+    }
+
+    const autocompleteService =
+      new window.google.maps.places.AutocompleteService();
+    autocompleteService.getPlacePredictions(
+      {
+        input: value,
+        types: ["geocode"],
+      },
+      (results, status) => {
+        if (
+          status === window.google.maps.places.PlacesServiceStatus.OK &&
+          results
+        ) {
+          setPredictions(results);
+        } else {
+          setPredictions([]);
+        }
+      },
+    );
+  }, [value, isLoaded]);
 
   return (
     <div className="w-full space-y-2 bg-white p-2 rounded-md">
+      {error && (
+        <Alert variant="destructive" className="mb-2">
+          <AlertDescription className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" /> {error}
+          </AlertDescription>
+        </Alert>
+      )}
       <Label>{label}</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -58,16 +98,16 @@ const LocationInput = ({
             <CommandInput placeholder="Search location..." />
             <CommandEmpty>No location found.</CommandEmpty>
             <CommandGroup>
-              {suggestions.map((suggestion) => (
+              {predictions.map((prediction) => (
                 <CommandItem
-                  key={suggestion}
+                  key={prediction.place_id}
                   onSelect={() => {
-                    onChange(suggestion);
+                    onChange(prediction.description);
                     setOpen(false);
                   }}
                 >
                   <MapPin className="mr-2 h-4 w-4" />
-                  {suggestion}
+                  {prediction.description}
                 </CommandItem>
               ))}
             </CommandGroup>
